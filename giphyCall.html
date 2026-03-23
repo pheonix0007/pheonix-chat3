@@ -1,0 +1,463 @@
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" type="image/png"
+    href="https://cpwebassets.codepen.io/assets/favicon/apple-touch-icon-5ae1a0698dcc2402e9712f7d01ed509a57814f994c660df9f7a952f3060705ee.png">
+  <meta name="apple-mobile-web-app-title" content="CodePen">
+
+  <link rel="shortcut icon" type="image/x-icon"
+    href="https://cpwebassets.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico">
+
+  <link rel="mask-icon" type="image/x-icon"
+    href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-8f3771b1072e3c38bd662872f6b673a722f4b3ca2421637d5596661b4e2132cc.svg"
+    color="#111">
+
+
+  <title>CodePen - Giphy API Search Example</title>
+
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-beta.2/css/bootstrap.css">
+
+  
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: transparent;
+    color: rgba(255,255,255,0.96);
+  }
+
+  body {
+    padding: 18px;
+  }
+
+  .title-search-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    text-align: center;
+    margin-bottom: 16px;
+    padding: 14px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    box-shadow: 0 18px 40px rgba(2,6,23,0.22), inset 0 1px 0 rgba(255,255,255,0.10);
+  }
+
+  .title-search-bar .search-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 6px;
+  }
+
+  .title-search-bar .search-btn,
+  .title-search-bar #submit,
+  .title-search-bar .trending,
+  .btn {
+    margin: 0;
+    padding: 10px 16px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    background: rgba(255,255,255,0.05) !important;
+    color: rgba(255,255,255,0.96) !important;
+    box-shadow: 0 8px 20px rgba(2,6,23,0.18);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+  }
+
+  #user-search {
+    min-width: 240px;
+    max-width: 100%;
+    padding: 12px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.96);
+    outline: none;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  #user-search::placeholder { color: rgba(255,255,255,0.60); }
+
+  hr {
+    border-color: rgba(255,255,255,0.08);
+    margin: 0 0 18px 0;
+  }
+
+  #results {
+    margin: 0 auto;
+    width: min(1200px, 100%);
+  }
+
+  .gif-box {
+    margin: 0.5rem;
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(2,6,23,0.20), inset 0 1px 0 rgba(255,255,255,0.08);
+    cursor: pointer;
+  }
+
+  .gif-box img,
+  .gif-box video {
+    display: block;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  #more {
+    margin: 20px 0 0;
+    text-align: center;
+  }
+
+  #more a {
+    display:inline-block;
+    padding:10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.96);
+    text-decoration:none;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 12px; }
+    .title-search-bar { padding: 12px; border-radius: 18px; }
+    #user-search { min-width: 0; width: 100%; }
+    .btn { width: calc(33.333% - 7px); min-width: 88px; }
+    .gif-box { margin: 6px; }
+    .gif-box img,
+    .gif-box video {
+      width: min(42vw, 180px);
+      height: min(42vw, 180px);
+    }
+  }
+</style>
+
+
+  <script>
+    window.console = window.console || function (t) { };
+  </script>
+
+
+
+  <script>
+    if (document.location.search.match(/type=embed/gi)) {
+      window.parent.postMessage("resize", "*");
+    }
+  </script>
+
+
+</head>
+
+<body translate="no">
+  <div class="title-search-bar">
+
+
+    <div class="search-bar">
+      <input type="text" name="query" id="user-search">
+      <input id="Giphy" type="button" value="Giphy" class="btn  btn-sm btn-success">
+      <input id="Tenor" type="button" value="Tenor" class="btn  btn-sm btn-success">
+      <input id="Other" type="button" value="Other" class="btn  btn-sm btn-success">
+    </div>
+  </div>
+  <hr>
+  <div id="results">
+    <div class="gif-box"></div>
+  </div>
+  <div id="more">
+
+  </div>
+  <script
+    src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script id="rendered-js">
+    // Initial Search Buttons
+    var topics = ["Internet Cats", "Meme's", "Typing", "Space", "Rick and Morty"];
+    function addSearchBtns() {
+      $("#buttons").html("");
+      for (i = 0; i < topics.length; i++) {
+        if (window.CP.shouldStopExecution(0)) break;
+        var $button = $("<input type='button' class='btn btn-sm search-btn' />");
+        $button.val(topics[i]);
+        $("#buttons").append($button);
+      } window.CP.exitedLoop(0);
+    }
+    addSearchBtns();
+
+    $(document).on("click", ".btn", function () {
+      $("#results").html("");
+      $("#more").empty();
+      // Beginning API call
+      var buttonId = $(this).attr("id");
+      if (buttonId == 'Giphy') {
+        var queryURL = "https://api.giphy.com/v1/gifs/search?";
+        var query;
+        var params = {
+          q: query,
+          limit: 1000,
+          api_key: "aFFKTuSMjd6j0wwjpFCPXZipQbcnw3vB",
+          fmt: "json"
+        };
+      } else if (buttonId == 'Tenor') {
+        //var queryURL = "https://api.giphy.com/v1/gifs/search?";
+        var queryURL = "https://g.tenor.com/v1/search?";
+        var query;
+        var params = {
+          q: query,
+          limit: 1000,
+          api_key: "LIVDSRZULELA",
+          fmt: "json"
+        };
+      } else if (buttonId == 'Other') {
+        //var queryURL = "https://api.giphy.com/v1/gifs/search?";
+        var queryURL = "#";
+        var query;
+        var params = {
+          q: query,
+          limit: 1000,
+          api_key: "LIVDSRZULELA",
+          fmt: "json"
+        };
+      }
+
+
+
+      if ($(this).hasClass("search-btn")) {
+        query = $(this).val();
+      } else if ($("#user-search").val() !== "") {
+        query = $("#user-search").val();
+        topics.push(query);
+        if (topics.length > 6) {
+          topics.shift();
+        }
+        addSearchBtns();
+      }
+      params.q = query;
+
+      if ($(this).hasClass("trending")) {
+        queryURL = "https://api.giphy.com/v1/gifs/trending?";
+        delete params.q;
+      }
+
+      if (buttonId == 'Giphy' || buttonId == 'Tenor') {
+        $.ajax({
+          url: queryURL + $.param(params),
+          method: "GET",
+          success: function (r) {
+            loadGif(buttonId, 0, r)
+
+           
+          }
+        });
+
+  
+
+      } else if (buttonId == 'Other') {
+        var master;
+        if (query == 'boobs' || query == 'Boobs' || query == 'b' || query == 'B') {
+          master = new Array("https://dl.phncdn.com/pics/gifs/034/328/452/34328452a.webm",'https://el.phncdn.com/pics/gifs/040/708/841/40708841a.webm','https://el.phncdn.com/pics/gifs/037/684/861/37684861a.webm','https://dl.phncdn.com/pics/gifs/033/384/052/33384052a.webm', 'https://el.phncdn.com/pics/gifs/011/864/061/11864061a.webm', 'https://dl.phncdn.com/pics/gifs/010/488/342/10488342a.webm', 'https://dl.phncdn.com/pics/gifs/010/950/401/10950401a.webm', 'https://dl.phncdn.com/pics/gifs/009/686/012/9686012a.webm', 'https://el.phncdn.com/pics/gifs/010/948/971/10948971a.webm', 'https://dl.phncdn.com/pics/gifs/040/010/381/40010381a.webm', 'https://dl.phncdn.com/pics/gifs/040/309/271/40309271a.webm', 'https://el.phncdn.com/pics/gifs/033/990/192/33990192a.webm', 'https://dl.phncdn.com/pics/gifs/028/983/531/28983531a.webm', 'https://el.phncdn.com/pics/gifs/038/544/141/38544141a.webm', 'https://dl.phncdn.com/pics/gifs/040/371/631/40371631a.webm', 'https://dl.phncdn.com/pics/gifs/040/010/341/40010341a.webm', 'https://dl.phncdn.com/pics/gifs/039/301/071/39301071a.webm', 'https://el.phncdn.com/pics/gifs/017/171/741/17171741a.webm', 'https://dl.phncdn.com/pics/gifs/039/504/851/39504851a.webm', 'https://dl.phncdn.com/pics/gifs/020/513/991/20513991a.webm', 'https://el.phncdn.com/pics/gifs/011/934/971/11934971a.webm', 'https://dl.phncdn.com/pics/gifs/022/029/841/22029841a.webm', 'https://el.phncdn.com/pics/gifs/011/864/101/11864101a.webm', 'https://dl.phncdn.com/pics/gifs/010/949/151/10949151a.webm', 'https://dl.phncdn.com/pics/gifs/021/797/001/21797001a.webm', 'https://el.phncdn.com/pics/gifs/008/980/302/8980302a.webm', 'https://dl.phncdn.com/pics/gifs/011/864/021/11864021a.webm', 'https://dl.phncdn.com/pics/gifs/013/521/512/13521512a.webm', 'https://dl.phncdn.com/pics/gifs/011/935/101/11935101a.webm', 'https://dl.phncdn.com/pics/gifs/011/935/141/11935141a.webm', 'https://dl.phncdn.com/pics/gifs/021/818/261/21818261a.webm', 'https://dl.phncdn.com/pics/gifs/009/686/402/9686402a.webm', 'https://el.phncdn.com/pics/gifs/034/928/872/34928872a.webm', 'https://dl.phncdn.com/pics/gifs/021/797/211/21797211a.webm', 'https://dl.phncdn.com/pics/gifs/021/797/671/21797671a.webm', 'https://dl.phncdn.com/pics/gifs/010/950/431/10950431a.webm');
+          //master=boobs;
+        }
+        else if (query == 'nipples' || query == 'Nipples' || query == 'n' || query == 'Nip' || query == 'N') {
+          var nipples = ['https://dl.phncdn.com/pics/gifs/027/264/661/27264661a.webm', 'https://dl.phncdn.com/pics/gifs/019/067/271/19067271a.webm', 'https://dl.phncdn.com/pics/gifs/016/240/412/16240412a.webm', 'https://dl.phncdn.com/pics/gifs/020/513/991/20513991a.webm', 'https://dl.phncdn.com/pics/gifs/009/686/012/9686012a.webm', 'https://dl.phncdn.com/pics/gifs/010/948/971/10948971a.webm', 'https://dl.phncdn.com/pics/gifs/011/935/141/11935141a.webm', 'https://el.phncdn.com/pics/gifs/022/029/841/22029841a.webm', 'https://dl.phncdn.com/pics/gifs/013/521/512/13521512a.webm', 'https://el.phncdn.com/pics/gifs/013/415/582/13415582a.webm', 'https://dl.phncdn.com/pics/gifs/010/948/971/10948971a.webm', 'https://dl.phncdn.com/pics/gifs/010/488/252/10488252a.webm', 'https://el.phncdn.com/pics/gifs/010/950/431/10950431a.webm', 'https://dl.phncdn.com/pics/gifs/010/949/151/10949151a.webm', 'https://el.phncdn.com/pics/gifs/033/900/402/33900402a.webm', 'https://dl.phncdn.com/pics/gifs/031/814/571/31814571a.webm', 'https://dl.phncdn.com/pics/gifs/035/451/672/35451672a.webm', 'https://dl.phncdn.com/pics/gifs/011/060/401/11060401a.webm', 'https://dl.phncdn.com/pics/gifs/010/950/401/10950401a.webm', 'https://el.phncdn.com/pics/gifs/017/171/741/17171741a.webm', 'https://dl.phncdn.com/pics/gifs/040/286/911/40286911a.webm', 'https://dl.phncdn.com/pics/gifs/040/368/221/40368221a.webm'];
+          master = nipples;
+        }
+        else if (query == 'rub' || query == 'Rub' || query == 'r' || query == 'R') {
+          var rubbing = ['https://dl.phncdn.com/pics/gifs/037/231/441/37231441a.webm','https://dl.phncdn.com/pics/gifs/024/113/181/24113181a.webm','https://el.phncdn.com/pics/gifs/005/995/371/5995371a.webm','https://el.phncdn.com/pics/gifs/007/894/131/7894131a.webm','https://dl.phncdn.com/pics/gifs/024/767/511/24767511a.webm','https://dl.phncdn.com/pics/gifs/034/193/722/34193722a.webm','https://dl.phncdn.com/pics/gifs/039/099/791/39099791a.webm','https://dl.phncdn.com/pics/gifs/030/098/891/30098891a.webm','https://dl.phncdn.com/pics/gifs/038/481/441/38481441a.webm','https://dl.phncdn.com/pics/gifs/015/317/722/15317722a.webm','https://dl.phncdn.com/pics/gifs/017/517/811/17517811a.webm','https://dl.phncdn.com/pics/gifs/028/329/342/28329342a.webm','https://dl.phncdn.com/pics/gifs/038/184/631/38184631a.webm'];
+          master = rubbing;
+
+        }
+        else if (query == 'lick' || query == 'Lick' || query == 'l' || query == 'L') {
+          var licking = ['https://cdnstatic.imctransfer.com/static_01/97000/97998/preview_320.mp4','https://cdnstatic.imctransfer.com/static_01/93000/93475/preview_320.mp4#t=1,3','https://dl.phncdn.com/pics/gifs/026/964/811/26964811a.webm','https://dl.phncdn.com/pics/gifs/036/995/971/36995971a.webm','https://el.phncdn.com/pics/gifs/038/931/071/38931071a.webm','https://dl.phncdn.com/pics/gifs/008/461/131/8461131a.webm','https://dl.phncdn.com/pics/gifs/037/114/441/37114441a.webm','https://dl.phncdn.com/pics/gifs/032/813/142/32813142a.webm','https://dl.phncdn.com/pics/gifs/017/608/091/17608091a.webm','https://dl.phncdn.com/pics/gifs/030/703/721/30703721a.webm','https://dl.phncdn.com/pics/gifs/040/175/591/40175591a.webm','https://dl.phncdn.com/pics/gifs/031/651/091/31651091a.webm','https://dl.phncdn.com/pics/gifs/040/405/411/40405411a.webm','https://el.phncdn.com/pics/gifs/008/774/551/8774551a.webm','https://dl.phncdn.com/pics/gifs/022/462/401/22462401a.webm','https://dl.phncdn.com/pics/gifs/020/660/241/20660241a.webm','https://dl.phncdn.com/pics/gifs/002/608/291/2608291a.webm','https://dl.phncdn.com/pics/gifs/036/117/951/36117951a.webm','https://dl.phncdn.com/pics/gifs/017/607/871/17607871a.webm','https://dl.phncdn.com/pics/gifs/009/862/492/9862492a.webm','https://el.phncdn.com/pics/gifs/029/223/382/29223382a.webm','https://dl.phncdn.com/pics/gifs/040/592/061/40592061a.webm','https://dl.phncdn.com/pics/gifs/015/424/412/15424412a.webm','https://dl.phncdn.com/pics/gifs/024/217/951/24217951a.webm','https://dl.phncdn.com/pics/gifs/039/527/431/39527431a.webm','https://dl.phncdn.com/pics/gifs/037/014/411/37014411a.webm','https://dl.phncdn.com/pics/gifs/024/645/101/24645101a.webm','https://dl.phncdn.com/pics/gifs/040/378/421/40378421a.webm','https://dl.phncdn.com/pics/gifs/024/645/121/24645121a.webm','https://dl.phncdn.com/pics/gifs/035/636/252/35636252a.webm','https://dl.phncdn.com/pics/gifs/000/854/301/854301a.webm','https://dl.phncdn.com/pics/gifs/034/691/112/34691112a.webm','https://dl.phncdn.com/pics/gifs/023/794/791/23794791a.webm','https://dl.phncdn.com/pics/gifs/022/657/791/22657791a.webm','https://dl.phncdn.com/pics/gifs/035/157/372/35157372a.webm'];
+          master = licking;
+
+        }
+        else if (query == 'doggy' || query == 'Doggy' || query == 'd' || query == 'D') {
+          var doggy = ['https://dl.phncdn.com/pics/gifs/037/285/591/37285591a.webm','https://dl.phncdn.com/pics/gifs/030/098/891/30098891a.webm','https://dl.phncdn.com/pics/gifs/027/847/232/27847232a.webm', 'https://dl.phncdn.com/pics/gifs/034/893/852/34893852a.webm', 'https://dl.phncdn.com/pics/gifs/026/519/102/26519102a.webm', 'https://el.phncdn.com/pics/gifs/039/153/531/39153531a.webm','https://dl.phncdn.com/pics/gifs/034/726/722/34726722a.webm', 'https://dl.phncdn.com/pics/gifs/025/261/831/25261831a.webm', 'https://el.phncdn.com/pics/gifs/034/073/552/34073552a.webm', 'https://dl.phncdn.com/pics/gifs/035/116/082/35116082a.webm', 'https://dl.phncdn.com/pics/gifs/034/597/862/34597862a.webm', 'https://dl.phncdn.com/pics/gifs/034/245/752/34245752a.webm', 'https://el.phncdn.com/pics/gifs/011/086/641/11086641a.webm', 'https://dl.phncdn.com/pics/gifs/039/157/231/39157231a.webm', 'https://el.phncdn.com/pics/gifs/016/983/432/16983432a.webm', 'https://dl.phncdn.com/pics/gifs/025/382/971/25382971a.webm', 'https://dl.phncdn.com/pics/gifs/005/473/622/5473622a.webm', 'https://dl.phncdn.com/pics/gifs/013/169/361/13169361a.webm', 'https://dl.phncdn.com/pics/gifs/030/604/951/30604951a.webm', 'https://dl.phncdn.com/pics/gifs/005/533/771/5533771a.webm', 'https://el.phncdn.com/pics/gifs/007/151/741/7151741a.webm', 'https://el.phncdn.com/pics/gifs/004/721/011/4721011a.webm', 'https://dl.phncdn.com/pics/gifs/025/263/181/25263181a.webm', 'https://dl.phncdn.com/pics/gifs/012/045/121/12045121a.webm', 'https://dl.phncdn.com/pics/gifs/012/045/181/12045181a.webm', 'https://dl.phncdn.com/pics/gifs/010/087/752/10087752a.webm', 'https://dl.phncdn.com/pics/gifs/020/169/011/20169011a.webm', 'https://el.phncdn.com/pics/gifs/039/493/871/39493871a.webm'];
+          master = doggy;
+
+        }else if (query == 'hard' || query == 'Hard' || query == 'ha' || query == 'Ha') {
+          var hard = ['https://el.phncdn.com/pics/gifs/040/197/361/40197361a.webm','https://dl.phncdn.com/pics/gifs/022/496/621/22496621a.webm','https://dl.phncdn.com/pics/gifs/025/900/482/25900482a.webm','https://dl.phncdn.com/pics/gifs/038/286/791/38286791a.webm','https://dl.phncdn.com/pics/gifs/038/747/821/38747821a.webm','https://dl.phncdn.com/pics/gifs/023/174/582/23174582a.webm','https://dl.phncdn.com/pics/gifs/032/516/902/32516902a.webm','https://el.phncdn.com/pics/gifs/032/516/861/32516861a.webm','https://dl.phncdn.com/pics/gifs/032/516/992/32516992a.webm','https://dl.phncdn.com/pics/gifs/040/494/401/40494401a.webm','https://el.phncdn.com/pics/gifs/020/178/601/20178601a.webm','https://dl.phncdn.com/pics/gifs/015/087/352/15087352a.webm','https://el.phncdn.com/pics/gifs/004/505/311/4505311a.webm','https://dl.phncdn.com/pics/gifs/034/465/841/34465841a.webm','https://dl.phncdn.com/pics/gifs/025/362/291/25362291a.webm','https://dl.phncdn.com/pics/gifs/028/826/941/28826941a.webm','https://el.phncdn.com/pics/gifs/030/184/241/30184241a.webm','https://dl.phncdn.com/pics/gifs/024/918/021/24918021a.webm','https://el.phncdn.com/pics/gifs/024/918/141/24918141a.webm','https://dl.phncdn.com/pics/gifs/038/563/381/38563381a.webm','https://dl.phncdn.com/pics/gifs/025/691/791/25691791a.webm'];
+          master = hard;
+
+        }else if (query == 'finger' || query == 'Finger' || query == 'fi' || query == 'Fi') {
+          var finger = ['https://el.phncdn.com/pics/gifs/039/630/951/39630951a.webm'];
+          master = finger;
+
+        }
+        else if (query == 'mis' || query == 'Mis' || query == 'm' || query == 'M') {
+          var mis = ["https://dl.phncdn.com/pics/gifs/024/387/221/24387221a.webm","https://dl.phncdn.com/pics/gifs/024/387/411/24387411a.webm","https://el.phncdn.com/pics/gifs/040/413/901/40413901a.webm","https://dl.phncdn.com/pics/gifs/039/259/741/39259741a.webm","https://el.phncdn.com/pics/gifs/040/595/691/40595691a.webm","https://dl.phncdn.com/pics/gifs/011/448/611/11448611a.webm","https://dl.phncdn.com/pics/gifs/035/920/961/35920961a.webm","https://dl.phncdn.com/pics/gifs/039/935/471/39935471a.webm","https://el.phncdn.com/pics/gifs/033/120/752/33120752a.webm","https://dl.phncdn.com/pics/gifs/020/969/461/20969461a.webm","https://dl.phncdn.com/pics/gifs/024/387/151/24387151a.webm","https://el.phncdn.com/pics/gifs/034/634/702/34634702a.webm","https://dl.phncdn.com/pics/gifs/036/048/101/36048101a.webm",'https://dl.phncdn.com/pics/gifs/039/557/261/39557261a.webm','https://dl.phncdn.com/pics/gifs/023/745/071/23745071a.webm','https://dl.phncdn.com/pics/gifs/034/119/222/34119222a.webm','https://dl.phncdn.com/pics/gifs/012/612/331/12612331a.webm','https://el.phncdn.com/pics/gifs/039/183/931/39183931a.webm','https://el.phncdn.com/pics/gifs/033/024/932/33024932a.webm','https://el.phncdn.com/pics/gifs/040/407/001/40407001a.webm','https://dl.phncdn.com/pics/gifs/040/530/721/40530721a.webm','https://dl.phncdn.com/pics/gifs/039/526/791/39526791a.webm','https://dl.phncdn.com/pics/gifs/021/151/531/21151531a.webm','https://dl.phncdn.com/pics/gifs/034/119/222/34119222a.webm','https://dl.phncdn.com/pics/gifs/039/966/451/39966451a.webm','https://dl.phncdn.com/pics/gifs/034/097/622/34097622a.webm','https://el.phncdn.com/pics/gifs/039/893/061/39893061a.webm','https://el.phncdn.com/pics/gifs/033/336/222/33336222a.webm','https://dl.phncdn.com/pics/gifs/021/151/581/21151581a.webm','https://el.phncdn.com/pics/gifs/035/760/381/35760381a.webm','https://dl.phncdn.com/pics/gifs/002/990/911/2990911a.webm','https://dl.phncdn.com/pics/gifs/039/213/471/39213471a.webm','https://dl.phncdn.com/pics/gifs/020/525/631/20525631a.webm','https://dl.phncdn.com/pics/gifs/022/035/371/22035371a.webm','https://dl.phncdn.com/pics/gifs/033/950/532/33950532a.webm','https://dl.phncdn.com/pics/gifs/033/024/932/33024932a.webm'];
+          master = mis;
+
+        }
+
+        loadWebm(0, master);
+        
+      }
+
+
+
+
+
+    });
+
+
+
+
+    function loadGif(buttonId, offset, r) {
+
+      if (buttonId == 'Giphy') {
+        if (r.data.length - offset < 10) {
+          offsetEnd = r.data.length;
+        } else {
+          var offsetEnd = offset + 10;
+        }
+        console.log('offset ' + offset + ', offsetEnd ' + offsetEnd + ' array length ' + r.data.length);
+      }
+      else if (buttonId == 'Tenor') {
+        if (r.results.length - offset < 10) {
+          offsetEnd = r.results.length;
+        } else {
+          var offsetEnd = offset + 10;
+        }
+        console.log('offset ' + offset + ', offsetEnd ' + offsetEnd + ' array length ' + r.results.length);
+      }
+      for (i = offset; i < offsetEnd; i++) {
+        if (window.CP.shouldStopExecution(1)) break;
+        var $img = $("<img>");
+        var $div = $("<div>");
+        if (buttonId == 'Giphy') {
+          var gifObj = r.data[i];
+          if (gifObj == null) {
+            break;
+          }
+          var gif = gifObj.images;
+          var gifUrl = gif.original.url;
+          var fixed_height_url = gif.fixed_height.url;
+          console.log('gif url ' + gif.original.url);
+          if ((i == offsetEnd - 1 && offsetEnd != r.data.length)) {
+
+            var more = '<a href="#" id="moreGiphyHref">More</a>';
+            $("#more").append(more);
+          }
+        } else if (buttonId == 'Tenor') {
+          var gifObj = r.results[i];
+          if (gifObj == null) {
+            break;
+          }
+          var gif = gifObj.media[0].tinygif;
+          var gifUrl = gif.url;
+          var fixed_height_url = gifUrl;
+          console.log('gif url ' + gifUrl);
+          if ((i == offsetEnd - 1 && offsetEnd != r.results.length)) {
+
+            var more = '<a href="#" id="moreTenorHref">More</a>';
+            $("#more").append(more);
+          }
+        }
+        // Image builder object CHKDSK
+        $img.attr({
+          "width": "200px",
+          "height": "200px",
+          src: fixed_height_url,
+          class: "gif"
+        });
+
+        $div.attr("id", gifUrl);
+        $div.css('cursor', 'pointer');
+        $div.addClass("gif-box");
+
+        $div.append($img);
+        $("#results").append($div);
+
+      } window.CP.exitedLoop(1);
+      $('#moreGiphyHref').click(function () {
+        $(".gif-box").remove();
+        $("#more").empty();
+        loadGif(buttonId, offsetEnd, r);
+      });
+
+      $('#moreTenorHref').click(function () {
+        $(".gif-box").remove();
+        $("#more").empty();
+        loadGif(buttonId, offsetEnd, r);
+      });
+
+      $(".gif").on("click", function () {
+              var url = $(this).attr("src");
+              parent.sendGif(url);
+              $(this).remove();
+            });
+    }
+
+    function loadWebm(offset, master) {
+
+      //const masterArr=new Array(master);
+      if (master.length - offset < 10) {
+        offsetEnd = master.length;
+      } else {
+        var offsetEnd = offset + 10;
+      }
+      console.log('offset ' + offset + ', offsetEnd ' + offsetEnd + ' array length ' + master.length);
+      for (i = offset; i < offsetEnd; i++) {
+        if (window.CP.shouldStopExecution(1)) break;
+        var $video = $("<video>");
+        var $div = $("<div>");
+
+
+        var fixed_height_url = master[i];
+        console.log('gif url ' + fixed_height_url);
+
+
+        var videoAttr = '<video class="webm" loop autoplay muted style="width:220px;height:124px;"><source src="' + fixed_height_url + '" type="video/webm;codecs=&quot;vp8, vorbis&quot;"> </video>';
+
+        $div.attr("id", fixed_height_url);
+        $div.addClass("gif-box");
+
+        $div.append(videoAttr);
+
+        $("#results").append($div);
+        if (i == offsetEnd - 1 && offsetEnd != master.length) {
+
+          var more = '<a href="#" id="moreWebmHref">More</a>';
+          $("#more").append(more);
+        }
+
+      } window.CP.exitedLoop(1);
+      $('#moreWebmHref').click(function () {
+        $(".gif-box").remove();
+        $("#more").empty();
+        loadWebm(offsetEnd, master);
+      });
+      $(".webm").on("click", function () {
+          var url = $(this).find('Source:first').attr('src');
+          //alert(url);
+          parent.sendGif(url);
+          $(this).remove();
+        });
+    }
+//# sourceURL=pen.js
+  </script>
+</body>
+
+</html>

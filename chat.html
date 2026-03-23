@@ -1,0 +1,607 @@
+<!doctype html>
+<html>
+<head>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+   <meta charset="utf-8" />
+   <title>Pheonix Chat</title>
+
+   <style>
+      :root {
+         --bg-overlay: linear-gradient(rgba(4,10,24,0.04), rgba(7,14,30,0.10));
+         --text-color: rgba(255,255,255,0.98);
+         --muted: rgba(255,255,255,0.72);
+         --bubble-radius: 22px;
+      }
+
+      * {
+         margin: 0;
+         padding: 0;
+         box-sizing: border-box;
+         color: var(--text-color);
+         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
+         font-weight: 700;
+      }
+
+      html, body {
+         width: 100%;
+         height: 100%;
+         overflow: hidden;
+      }
+
+      body {
+         position: relative;
+         background: transparent;
+      }
+
+      body::before{
+         content: "";
+         position: fixed;
+         inset: 0;
+         background-image: var(--bg-overlay), url('/chat-bg.png');
+         background-size: cover;
+         background-position: center center;
+         background-repeat: no-repeat;
+         z-index: -2;
+         filter: saturate(112%) contrast(102%);
+      }
+
+      body::after{
+         content: "";
+         position: fixed;
+         inset: 0;
+         background:
+           radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 24%),
+           radial-gradient(circle at top right, rgba(255,255,255,0.05), transparent 20%);
+         z-index: -1;
+         pointer-events: none;
+      }
+
+      .app-shell{
+         width: 100vw;
+         height: 100dvh;
+         min-height: 100vh;
+         display: flex;
+         flex-direction: column;
+      }
+
+      .header-area {
+         padding: max(12px, env(safe-area-inset-top)) 18px 8px;
+         display: grid;
+         grid-template-columns: 1fr auto 1fr;
+         align-items: center;
+         background: transparent;
+         flex: 0 0 auto;
+      }
+
+      .header-area h1 {
+         justify-self: center;
+         color: var(--text-color);
+         text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+         letter-spacing: 0.3px;
+         font-size: 18px;
+      }
+
+      .header-spacer {
+         min-height: 1px;
+      }
+
+      .presence {
+         justify-self: end;
+         width: 14px;
+         height: 14px;
+         border-radius: 50%;
+         background: rgba(255,255,255,0.36);
+         border: 1px solid rgba(255,255,255,0.30);
+         box-shadow: 0 4px 12px rgba(2,6,23,0.18);
+      }
+
+      .presence.online {
+         background: #34c759;
+         border-color: rgba(255,255,255,0.55);
+         box-shadow: 0 0 0 3px rgba(52,199,89,0.18), 0 0 16px rgba(52,199,89,0.45);
+      }
+
+      .message-area {
+         flex: 1 1 auto;
+         min-height: 0;
+         overflow-y: auto;
+         padding: 10px 18px 8px;
+         display: flex;
+         flex-direction: column;
+         gap: 12px;
+         scroll-behavior: smooth;
+         -webkit-overflow-scrolling: touch;
+      }
+
+      .message-area::-webkit-scrollbar {
+         width: 8px;
+      }
+
+      .message-area::-webkit-scrollbar-thumb {
+         background: rgba(255,255,255,0.16);
+         border-radius: 999px;
+      }
+
+      .message {
+         position: relative;
+         max-width: min(72%, 540px);
+         padding: 12px 16px;
+         border-radius: var(--bubble-radius);
+         color: var(--text-color);
+         font-size: 15px;
+         line-height: 1.45;
+         word-break: break-word;
+         backdrop-filter: blur(34px) saturate(190%);
+         -webkit-backdrop-filter: blur(34px) saturate(190%);
+         background: rgba(255,255,255,0.018);
+         border: 1px solid rgba(255,255,255,0.15);
+         box-shadow: 0 8px 24px rgba(2,6,23,0.12), inset 0 1px 0 rgba(255,255,255,0.16);
+         -webkit-backface-visibility: hidden;
+         text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+      }
+
+      .message::before{
+         content:"";
+         position:absolute;
+         inset:0;
+         border-radius: inherit;
+         pointer-events:none;
+         background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.03));
+         opacity:0.95;
+      }
+
+      .message::after{
+         content:"";
+         position:absolute;
+         top:0;
+         left:1px;
+         right:1px;
+         height: 34%;
+         border-top-left-radius: inherit;
+         border-top-right-radius: inherit;
+         background: linear-gradient(180deg, rgba(255,255,255,0.34), rgba(255,255,255,0.02));
+         pointer-events:none;
+         opacity:0.65;
+      }
+
+      .my-message,
+      .my-gif-message {
+         align-self: flex-end;
+         background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.018));
+         border: 1px solid rgba(255,255,255,0.16);
+      }
+
+      .others-message {
+         align-self: flex-start;
+         background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+         border: 1px solid rgba(255,255,255,0.14);
+      }
+
+      .message img,
+      .message video {
+         display: block;
+         width: 220px;
+         max-width: min(100%, 220px);
+         border-radius: 14px;
+         object-fit: cover;
+         box-shadow: 0 8px 24px rgba(2,6,23,0.20);
+      }
+
+      .separator {
+         height: 10px;
+         width: 100%;
+      }
+
+      .typing-row {
+         display: none;
+         align-self: flex-start;
+      }
+
+      .typing-indicator {
+         display: inline-flex;
+         align-items: center;
+         gap: 6px;
+         padding: 10px 14px;
+         border-radius: 18px;
+         backdrop-filter: blur(28px) saturate(180%);
+         -webkit-backdrop-filter: blur(28px) saturate(180%);
+         background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+         border: 1px solid rgba(255,255,255,0.13);
+         box-shadow: 0 8px 24px rgba(2,6,23,0.10), inset 0 1px 0 rgba(255,255,255,0.10);
+      }
+
+      .typing-indicator span{
+         width: 8px;
+         height: 8px;
+         border-radius: 50%;
+         background: rgba(255,255,255,0.85);
+         animation: bounce 1.2s infinite ease-in-out;
+      }
+
+      .typing-indicator span:nth-child(2){ animation-delay: .15s; }
+      .typing-indicator span:nth-child(3){ animation-delay: .3s; }
+
+      @keyframes bounce{
+         0%, 80%, 100% { transform: translateY(0); opacity: .45; }
+         40% { transform: translateY(-4px); opacity: 1; }
+      }
+
+      .typing-area {
+         flex: 0 0 auto;
+         display: flex;
+         align-items: center;
+         gap: 12px;
+         padding: 10px 18px calc(18px + env(safe-area-inset-bottom));
+         background: transparent;
+      }
+
+      .typing-box {
+         width: 100%;
+         min-width: 0;
+         height: 54px;
+         border: 1px solid rgba(255,255,255,0.12);
+         border-radius: 999px;
+         padding: 0 18px;
+         background: rgba(255,255,255,0.03);
+         backdrop-filter: blur(18px) saturate(150%);
+         -webkit-backdrop-filter: blur(18px) saturate(150%);
+         color: var(--text-color);
+         outline: none;
+         box-shadow: 0 6px 18px rgba(2,6,23,0.10);
+         font-size: 16px;
+         font-weight: 600;
+      }
+
+      .typing-box::placeholder {
+         color: rgba(255,255,255,0.68);
+      }
+
+      .typing-box:focus {
+         border-color: rgba(255,255,255,0.24);
+      }
+
+      .send-button,
+      .gif-button,
+      .close-modal {
+         flex: 0 0 auto;
+         min-width: 54px;
+         height: 54px;
+         padding: 0 16px;
+         border-radius: 999px;
+         border: 1px solid rgba(255,255,255,0.12);
+         background: rgba(255,255,255,0.04);
+         backdrop-filter: blur(18px) saturate(170%);
+         -webkit-backdrop-filter: blur(18px) saturate(170%);
+         box-shadow: 0 6px 18px rgba(2,6,23,0.14);
+         cursor: pointer;
+      }
+
+      .send-button {
+         min-width: 74px;
+      }
+
+      .gif-button span,
+      .send-button span,
+      .close-modal {
+         color: var(--text-color);
+      }
+
+      .gif-modal {
+         position: fixed;
+         inset: 0;
+         display: none;
+         align-items: center;
+         justify-content: center;
+         padding: 18px;
+         background: rgba(4,10,24,0.10);
+         backdrop-filter: blur(10px);
+         -webkit-backdrop-filter: blur(10px);
+         z-index: 1000;
+      }
+
+      .gif-modal.open {
+         display: flex;
+      }
+
+      .gif-modal-card {
+         position: relative;
+         width: min(1100px, 94vw);
+         height: min(82vh, 760px);
+         border-radius: 28px;
+         overflow: hidden;
+         background: rgba(255,255,255,0.05);
+         border: 1px solid rgba(255,255,255,0.14);
+         backdrop-filter: blur(24px) saturate(180%);
+         -webkit-backdrop-filter: blur(24px) saturate(180%);
+         box-shadow: 0 20px 60px rgba(2,6,23,0.22), inset 0 1px 0 rgba(255,255,255,0.16);
+      }
+
+      .gif-modal-card::before {
+         content:"";
+         position:absolute;
+         inset:0;
+         background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
+         pointer-events:none;
+      }
+
+      .gif-toolbar {
+         position: absolute;
+         top: 14px;
+         right: 14px;
+         z-index: 2;
+         display: flex;
+         gap: 8px;
+      }
+
+      .gif-frame {
+         width: 100%;
+         height: 100%;
+         border: none;
+         background: transparent;
+      }
+
+      @media (max-width: 900px) {
+         .message {
+            max-width: 82%;
+         }
+      }
+
+      @media (max-width: 640px) {
+         .header-area {
+            padding: max(10px, env(safe-area-inset-top)) 12px 6px;
+         }
+
+         .header-area h1 {
+            font-size: 17px;
+         }
+
+         .message-area {
+            padding: 8px 12px 6px;
+            gap: 10px;
+         }
+
+         .message {
+            max-width: 88%;
+            font-size: 14px;
+            padding: 11px 14px;
+         }
+
+         .message img,
+         .message video {
+            width: min(210px, 100%);
+            height: auto;
+            max-height: 220px;
+         }
+
+         .typing-area {
+            gap: 8px;
+            padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+         }
+
+         .typing-box {
+            height: 50px;
+            padding: 0 14px;
+            font-size: 16px;
+         }
+
+         .send-button,
+         .gif-button,
+         .close-modal {
+            height: 50px;
+            min-width: 50px;
+            padding: 0 14px;
+         }
+
+         .send-button {
+            min-width: 66px;
+         }
+
+         .gif-modal {
+            padding: 12px;
+         }
+
+         .gif-modal-card {
+            width: 100%;
+            height: 86dvh;
+            border-radius: 22px;
+         }
+      }
+   </style>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"
+      integrity="sha512-v8ng/uGxkge3d1IJuEo6dJP8JViyvms0cly9pnbfRxT6/31c3dRWxIiwGnMSWwZjHKOuY3EVmijs7k1jz/9bLA=="
+      crossorigin="anonymous"></script>
+   <script type="text/javascript" src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'></script>
+
+   <script>
+      var firstTime = true;
+      var socket;
+      var myUserId = 'user-' + Math.random().toString(36).slice(2,8);
+      var typingTimer;
+
+      window.onload = function () {
+         var connectionOptions = {
+            "force new connection": true,
+            "reconnectionAttempts": "Infinity",
+            "timeout": 10000,
+            "transports": ["websocket"]
+         };
+
+         socket = io.connect('https://pheonix-chat.onrender.com', connectionOptions);
+
+         socket.on('connect', function () {
+            socket.emit('presence', { userId: myUserId });
+         });
+
+         socket.on('message-from-others', function (message) {
+            hideTypingIndicator();
+
+            const messages = document.getElementById("message-area");
+            const messageStr = message + '';
+
+            if (messageStr.includes('.gif')) {
+               var gifHtml =
+                  '<div class="message others-message"><img src="' + messageStr + '"/></div>' +
+                  '<div class="separator"></div>';
+               $("#typing-row").before(gifHtml);
+            }
+            else if (messageStr.includes('.webm') || messageStr.includes('.mp4')) {
+               var gifHtml =
+                  '<div class="message others-message"><video loop autoplay onloadedmetadata="this.muted = true" playsinline><source src="' + messageStr + '" type="video/webm;codecs=&quot;vp8, vorbis&quot;"></video></div>' +
+                  '<div class="separator"></div>';
+               $("#typing-row").before(gifHtml);
+            }
+            else {
+               var msg =
+                  '<div class="message others-message">' + message + '</div>' +
+                  '<div class="separator"></div>';
+               $("#typing-row").before(msg);
+            }
+
+            messages.scrollTop = messages.scrollHeight;
+         });
+
+         socket.on('presence-update', function(list) {
+            var other = null;
+            for (var i = 0; i < list.length; i++) {
+               if (list[i].userId !== myUserId) {
+                  other = list[i];
+                  break;
+               }
+            }
+
+            var dot = document.getElementById('presence-indicator');
+            if (other) {
+               dot.classList.add('online');
+               if (other.typing) {
+                  showTypingIndicator();
+               } else {
+                  hideTypingIndicator();
+               }
+            } else {
+               dot.classList.remove('online');
+               hideTypingIndicator();
+            }
+         });
+
+         document.getElementById('gif-modal').addEventListener('click', function(e){
+            if (e.target.id === 'gif-modal') closeGifModal();
+         });
+      };
+
+      function showTypingIndicator() {
+         var row = document.getElementById('typing-row');
+         row.style.display = 'block';
+         document.getElementById('message-area').scrollTop = document.getElementById('message-area').scrollHeight;
+      }
+
+      function hideTypingIndicator() {
+         var row = document.getElementById('typing-row');
+         row.style.display = 'none';
+      }
+
+      function onTypingChange() {
+         clearTimeout(typingTimer);
+         if (socket) socket.emit('typing', true);
+         typingTimer = setTimeout(function(){ if (socket) socket.emit('typing', false); }, 1200);
+      }
+
+      function sendGif(url) {
+         var message = document.getElementById("typing-box");
+         message.value = url;
+         sendMessage();
+         closeGifModal();
+      }
+
+      function sendMessage() {
+         var message = document.getElementById("typing-box").value;
+         if (message.length != 0) {
+            const messageStr = message + '';
+            const messages = document.getElementById("message-area");
+
+            if (messageStr.includes('.gif') || messageStr.includes('.webm') || messageStr.includes('.mp4')) {
+               var gifMsg='Gif Sent';
+               var msg =
+                  '<div class="message my-gif-message">' + gifMsg + '</div>' +
+                  '<div class="separator"></div>';
+               $("#typing-row").before(msg);
+            }
+            else {
+               var msg =
+                  '<div class="message my-message">' + message + '</div>' +
+                  '<div class="separator"></div>';
+               $("#typing-row").before(msg);
+            }
+
+            messages.scrollTop = messages.scrollHeight;
+            document.getElementById("typing-box").value = "";
+            if (socket) {
+               socket.emit("pheonix-message", message);
+               socket.emit('typing', false);
+            }
+         }
+      }
+
+      function searchGif() {
+         var modal = document.getElementById('gif-modal');
+         var frame = document.getElementById('gif-frame');
+         if (modal.classList.contains('open')) {
+            closeGifModal();
+         } else {
+            frame.src = '/giphyCall';
+            modal.classList.add('open');
+         }
+      }
+
+      function closeGifModal() {
+         var modal = document.getElementById('gif-modal');
+         var frame = document.getElementById('gif-frame');
+         modal.classList.remove('open');
+         frame.src = '';
+      }
+   </script>
+</head>
+
+<body>
+   <div class="app-shell">
+      <div class="header-area">
+         <div class="header-spacer"></div>
+         <h1>pheonix Chat</h1>
+         <div id="presence-indicator" class="presence" title="Other user status"></div>
+      </div>
+
+      <div class="message-area" id="message-area">
+         <div class="typing-row" id="typing-row">
+            <div class="typing-indicator">
+               <span></span><span></span><span></span>
+            </div>
+         </div>
+      </div>
+
+      <div class="typing-area">
+         <button class="gif-button" onclick="searchGif()">
+            <span>
+               <svg viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="rgb(183,93,214)" d="M20 0a6 6 0 016 6v14a6 6 0 01-6 6H6a6 6 0 01-6-6V6a6 6 0 016-6h14zM7.928 9C5.196 9 3.95 10.933 3.95 12.815S5.04 16.6 7.918 16.6c1.402 0 2.67-.494 3.127-1.409v-3.198H7.492v1.594h1.839v.925c-.416.299-1.018.37-1.403.37-1.464 0-1.952-1.141-1.952-2.067 0-1.409.768-2.108 1.952-2.108.489 0 1.133.134 1.662.628l1.195-1.173C9.829 9.206 8.936 9 7.928 9zm6.673.206h-2.047v7.199h2.047v-7.2zm7.399 0h-5.578v7.199h2.036v-2.479h3.324V12.26h-3.324v-1.347H22V9.206z" fill-rule="evenodd"></path>
+               </svg>
+            </span>
+         </button>
+
+         <input onblur="this.focus()" autofocus type="text"
+            onKeyDown="if(event.keyCode==13) sendMessage();" oninput="onTypingChange();" class="typing-box" id="typing-box" placeholder="Type a message" />
+
+         <button class="send-button" onclick="sendMessage()">
+            <span>Send</span>
+         </button>
+      </div>
+   </div>
+
+   <div id="gif-modal" class="gif-modal">
+      <div class="gif-modal-card">
+         <div class="gif-toolbar">
+            <button class="close-modal" onclick="closeGifModal()">Close</button>
+         </div>
+         <iframe id="gif-frame" class="gif-frame" src="" allowtransparency="true"></iframe>
+      </div>
+   </div>
+</body>
+</html>
