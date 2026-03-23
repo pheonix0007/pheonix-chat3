@@ -3,7 +3,7 @@
 <head>
    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
    <meta charset="utf-8" />
-   <title>Pheonix Chat</title>
+   <title>Pheonix Chat Mobile</title>
 
    <style>
       :root {
@@ -105,7 +105,7 @@
          flex: 1 1 auto;
          min-height: 0;
          overflow-y: auto;
-         padding: 10px 18px 8px;
+         padding: 8px 12px 6px;
          display: flex;
          flex-direction: column;
          gap: 12px;
@@ -124,7 +124,7 @@
 
       .message {
          position: relative;
-         max-width: min(72%, 540px);
+         max-width: min(88%, 540px);
          padding: 12px 16px;
          border-radius: var(--bubble-radius);
          color: var(--text-color);
@@ -231,14 +231,14 @@
          display: flex;
          align-items: center;
          gap: 12px;
-         padding: 10px 18px calc(18px + env(safe-area-inset-bottom));
+         padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
          background: transparent;
       }
 
       .typing-box {
          width: 100%;
          min-width: 0;
-         height: 54px;
+         height: 50px;
          border: 1px solid rgba(255,255,255,0.12);
          border-radius: 999px;
          padding: 0 18px;
@@ -264,8 +264,8 @@
       .gif-button,
       .close-modal {
          flex: 0 0 auto;
-         min-width: 54px;
-         height: 54px;
+         min-width: 50px;
+         height: 50px;
          padding: 0 16px;
          border-radius: 999px;
          border: 1px solid rgba(255,255,255,0.12);
@@ -277,7 +277,7 @@
       }
 
       .send-button {
-         min-width: 74px;
+         min-width: 66px;
       }
 
       .gif-button span,
@@ -305,8 +305,8 @@
 
       .gif-modal-card {
          position: relative;
-         width: min(1100px, 94vw);
-         height: min(82vh, 760px);
+         width: 100%;
+         height: 86dvh;
          border-radius: 28px;
          overflow: hidden;
          background: rgba(255,255,255,0.05);
@@ -406,6 +406,68 @@
             border-radius: 22px;
          }
       }
+   
+      @media (max-width: 640px) {
+         .header-area {
+            padding: max(10px, env(safe-area-inset-top)) 12px 6px;
+         }
+
+         .header-area h1 {
+            font-size: 17px;
+         }
+
+         .message-area {
+            padding: 8px 10px 6px;
+            gap: 10px;
+         }
+
+         .message {
+            max-width: 90%;
+            font-size: 14px;
+            padding: 10px 13px;
+         }
+
+         .message img,
+         .message video {
+            width: min(64vw, 220px);
+            height: auto;
+            max-height: 220px;
+         }
+
+         .typing-area {
+            gap: 8px;
+            padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
+         }
+
+         .typing-box {
+            height: 48px;
+            padding: 0 14px;
+            font-size: 16px;
+         }
+
+         .send-button,
+         .gif-button,
+         .close-modal {
+            height: 48px;
+            min-width: 48px;
+            padding: 0 12px;
+         }
+
+         .send-button {
+            min-width: 64px;
+         }
+
+         .gif-modal {
+            padding: 10px;
+         }
+
+         .gif-modal-card {
+            width: 100%;
+            height: 88dvh;
+            border-radius: 20px;
+         }
+      }
+
    </style>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"
       integrity="sha512-v8ng/uGxkge3d1IJuEo6dJP8JViyvms0cly9pnbfRxT6/31c3dRWxIiwGnMSWwZjHKOuY3EVmijs7k1jz/9bLA=="
@@ -565,7 +627,7 @@
    <div class="app-shell">
       <div class="header-area">
          <div class="header-spacer"></div>
-         <h1>pheonix Chat</h1>
+         <h1>pheonix Chat Mobile</h1>
          <div id="presence-indicator" class="presence" title="Other user status"></div>
       </div>
 
@@ -586,7 +648,7 @@
             </span>
          </button>
 
-         <input onblur="this.focus()" autofocus type="text"
+         <input autofocus type="text"
             onKeyDown="if(event.keyCode==13) sendMessage();" oninput="onTypingChange();" class="typing-box" id="typing-box" placeholder="Type a message" />
 
          <button class="send-button" onclick="sendMessage()">
